@@ -1,5 +1,3 @@
-# create-template-promise
-
 ## Project setup
 ```
 pnpm install
