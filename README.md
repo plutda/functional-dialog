@@ -1,4 +1,10 @@
 ## Project setup
+
+### Preview
+
+[plutda.github.io/functional-dialog](https://plutda.github.io/functional-dialog/)
+
+### Step
 ```
 pnpm install
 ```
