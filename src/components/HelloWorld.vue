@@ -65,7 +65,7 @@ function openMessageBox() {
       console.log(action, instance)
       formRef.value && formRef.value.validate(status => {
         console.log('校验状态: ', status)
-        if (status) done()
+        if (status || action==='cancel') done()
       })
     }
   })
