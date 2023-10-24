@@ -1,58 +1,89 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+  <div class="container">
+    <button @click="openMessageBox">
+      打开messagebox
+    </button>
+    <button @click="open(1); open(2)">
+      打开两个弹框
+    </button>
   </div>
+  <TemplatePromise v-slot="{ resolve, args, isResolving }">
+    <el-dialog :modelValue="true" :title="args[0]">
+      <div>Dialog {{ args[1] }}</div>
+      <p>可以打开控制台查看logs</p>
+      <div class="flex gap-2 justify-end">
+        <el-button @click="resolve('cancel')">
+          取消
+        </el-button>
+        <el-button type="primary" :disabled="isResolving" @click="resolve(asyncFn())">
+          {{ isResolving ? 'loading...' : '确认' }}
+        </el-button>
+      </div>
+    </el-dialog>
+  </TemplatePromise>
 </template>
 
-<script>
-export default {
-  name: 'HelloWorld',
-  props: {
-    msg: String
+<script lang="jsx" setup>
+import { reactive, ref } from 'vue';
+import { createTemplatePromise } from '@vueuse/core'
+import { ElDialog, ElMessageBox, ElForm, ElFormItem, ElInput, ElButton } from 'element-plus'
+
+const TemplatePromise = createTemplatePromise()
+const formRef = ref(null)
+const form = reactive({ height: '', width: '' })
+const rules = reactive({
+  height: {
+    required: true,
+    trigger: 'blur'
+  },
+  width: {
+    required: true,
+    trigger: 'blur'
   }
+})
+
+function openMessageBox() {
+  ElMessageBox({
+    title: 'Message',
+    showCancelButton: true,
+    // message如果不是函数形式 绑定ref会失败
+    message: () =>
+      <ElForm
+        ref={formRef}
+        model={form}
+        rules={rules}
+      >
+        <ElFormItem label="height" prop="height">
+          <ElInput v-model={form.height}></ElInput>
+        </ElFormItem>
+        <ElFormItem label="width" prop="width">
+          <ElInput v-model={form.width}></ElInput>
+        </ElFormItem>
+      </ElForm>
+    ,
+    beforeClose: (action, instance, done) => {
+      console.log(action, instance)
+      formRef.value && formRef.value.validate(status => {
+        console.log('校验状态: ', status)
+        if (status) done()
+      })
+    }
+  })
+}
+
+async function open(idx) {
+  console.log(idx, 'Before')
+  const result = await TemplatePromise.start('Title', `Hello ${idx}`)
+  console.log(idx, 'After', result)
+}
+
+function asyncFn() {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve('ok')
+    }, 1000)
+  })
 }
 </script>
 
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>
+<style></style>
